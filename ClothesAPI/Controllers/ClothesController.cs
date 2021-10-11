@@ -16,13 +16,15 @@ namespace ClothesAPI.Controllers
         private readonly IHostingEnvironment _hostingEnvironment;
         private readonly ILogger<ClothesController> _logger;
         private readonly ManageFile manageFile;
-        private const string fileName = "Data\\clothes.csv";
+        private const string fileNameProduct = "Data\\clothes.csv";
+        private const string fileNameReport = "report.csv";
+
 
         public ClothesController(ILogger<ClothesController> logger, IHostingEnvironment hostingEnvironment)
         {
             _logger = logger;
             _hostingEnvironment = hostingEnvironment;
-            manageFile = ManageFile.GetInstance(Path.Combine(_hostingEnvironment.ContentRootPath, fileName));
+            manageFile = ManageFile.GetInstance(Path.Combine(_hostingEnvironment.ContentRootPath, fileNameProduct));
         }
 
         /// <summary>
@@ -59,7 +61,6 @@ namespace ClothesAPI.Controllers
             return Ok(products);
         }
 
-
         /// <summary>
         /// Добавление новой сущности Продукт
         /// </summary>
@@ -73,6 +74,16 @@ namespace ClothesAPI.Controllers
                 return BadRequest(error);
 
             return Ok(product);
+        }
+
+        /// <summary>
+        /// Получение отчета
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("report")]
+        public async Task<IActionResult> GetReport()
+        {
+            return File(manageFile.GetReportFile(fileNameReport), "application/octet-stream", fileNameReport);
         }
     }
 }

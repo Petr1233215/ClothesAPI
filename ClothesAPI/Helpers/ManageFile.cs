@@ -14,6 +14,8 @@ namespace ClothesAPI.Helpers
         private readonly string _fullPath;
         private static IEnumerable<Product> _products = new List<Product>();
         public const string csvColumns = "Id;Type;Category 1;Category 2;Article number;Title;Description;Material;Size;Color;Price";
+        public const string csvColumnsReport = "Type;Category 1;Category 2;Общее кол-во товаров;Общая стоимость";
+
 
         private ManageFile() { }
 
@@ -37,8 +39,6 @@ namespace ClothesAPI.Helpers
                 for(int i = 1; i < csvLines.Length; i++)
                 {
                     var row = csvLines[i].Split(';');
-                    if (row.Length < 11)
-                        continue;
 
                     if (!Int32.TryParse(row[0], out int Id))
                         throw new Exception("значение столбца Id имел неверный формат");
@@ -109,6 +109,12 @@ namespace ClothesAPI.Helpers
         /// </summary>
         public void ClearManage() => _manageFile = null;
 
+
+        /// <summary>
+        /// Добавление продукта
+        /// </summary>
+        /// <param name="product">Продукт</param>
+        /// <returns>возващает ошибку, если есть такая</returns>
         public string AddProduct(Product product)
         {
             string error = "";
@@ -131,6 +137,40 @@ namespace ClothesAPI.Helpers
                 }
             }
             return error;
+        }
+
+        /// <summary>
+        /// Получение сгруппированных данных для отчета
+        /// </summary>
+        public IEnumerable<ReportProduct> GetReportData()
+        {
+            return _products.GroupBy(c => new { c.Type, c.Category_1, c.Category_2 })
+                .Select(g => new ReportProduct
+                {
+                    Type = g.Key.Type,
+                    Category_1 = g.Key.Category_1,
+                    Category_2 = g.Key.Category_2,
+                    CountProduct = g.Count(),
+                    TotalPrice = g.Sum(t => t.Price)
+                });
+        }
+
+
+        /// <summary>
+        /// Получение потока файла отчета
+        /// </summary>
+        public FileStream GetReportFile(string fileName)
+        {
+            var reportProducts = GetReportData();
+            var path = Path.Combine(Path.GetTempPath(), fileName);
+            using (var sr = new StreamWriter(path, false, Encoding.UTF8))
+            {
+                sr.WriteLine(csvColumnsReport);
+                foreach (var report in reportProducts)
+                    sr.WriteLine($"{report.Type};{report.Category_1};{report.Category_2};{report.CountProduct};{report.TotalPrice};");
+            }
+
+            return new FileStream(path, FileMode.Open);
         }
     }
 }
