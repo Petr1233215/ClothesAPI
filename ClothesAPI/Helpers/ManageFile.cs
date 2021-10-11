@@ -90,7 +90,7 @@ namespace ClothesAPI.Helpers
         /// <returns></returns>
         public static ManageFile GetInstance(string fullPath)
         {
-            if (_manageFile == null)
+             if (_manageFile == null)
             {
                 lock (lockObject)
                 {
